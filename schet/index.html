@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тренажёр «Счёт» — 2 класс</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#eef6ff;--card:#fff;--ink:#2b2d42;--accent:#ff8c42;--blue:#3a86ff;--green:#2a9d8f;--red:#e63946;--muted:#6c757d;--line:#d9e6f5;--rbx:#00b06f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;font-size:18px;line-height:1.4}
+.wrap{max-width:560px;margin:0 auto;padding:12px}
+.card{background:var(--card);border-radius:18px;padding:14px;box-shadow:0 3px 0 var(--line);margin-bottom:12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+h1{font-size:22px;margin:0}
+.bank{background:var(--rbx);color:#fff;border-radius:14px;padding:6px 12px;font-weight:800;font-size:20px;white-space:nowrap}
+.bank small{display:block;font-size:12px;font-weight:600;opacity:.9}
+.seg{display:flex;border-radius:12px;overflow:hidden;border:2px solid var(--blue);margin:6px 0}
+.seg button{flex:1;font:inherit;font-size:16px;border:0;background:#fff;color:var(--blue);padding:8px 4px;cursor:pointer;font-weight:800}
+.seg button.on{background:var(--blue);color:#fff}
+.lbl{font-size:14px;color:var(--muted);margin-top:6px}
+.stats{display:flex;justify-content:space-around;font-size:15px;color:var(--muted)}
+.stats b{color:var(--ink);font-size:18px}
+.task{font-size:52px;font-weight:800;text-align:center;letter-spacing:2px;margin:10px 0;min-height:70px}
+.task .ans{display:inline-block;min-width:90px;border-bottom:5px solid var(--accent);color:var(--accent)}
+.col{display:grid;grid-template-columns:44px 64px 64px;justify-content:center;font-size:46px;font-weight:800;text-align:center;row-gap:2px;margin:6px 0 10px}
+.col .sign{align-self:center;font-size:40px;color:var(--blue)}
+.col .dig{height:62px;display:flex;align-items:center;justify-content:center}
+.col .line{grid-column:1/4;border-top:4px solid var(--ink);margin:2px 0}
+.col .carry{height:30px;display:flex;align-items:center;justify-content:center}
+.col .carry button{width:30px;height:30px;border-radius:50%;border:2px dashed #bbb;background:#fff;font:inherit;font-size:16px;cursor:pointer;color:var(--accent);padding:0}
+.col .carry button.on{border-style:solid;border-color:var(--accent);background:#fff3e6}
+.col .cell{height:64px;border:3px solid var(--line);border-radius:12px;margin:0 4px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent)}
+.col .cell.sel{border-color:var(--accent);background:#fff8f0}
+.colhead{display:grid;grid-template-columns:44px 64px 64px;justify-content:center;font-size:13px;color:var(--muted);text-align:center}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pad button{font:inherit;font-size:30px;font-weight:800;height:62px;border-radius:14px;border:0;background:#fff;box-shadow:0 3px 0 var(--line);cursor:pointer;color:var(--ink);touch-action:manipulation}
+.pad button:active{transform:translateY(2px);box-shadow:none}
+.pad .ok{background:var(--green);color:#fff}
+.pad .del{background:#e9ecef}
+.msg{text-align:center;font-weight:800;font-size:20px;min-height:30px;margin:4px 0}
+.msg.good{color:var(--green)}.msg.bad{color:var(--red)}
+.hint{background:#eef5ff;border-radius:12px;padding:10px 12px;font-size:16px;margin-top:8px}
+.btn{font:inherit;font-weight:800;border:0;border-radius:12px;padding:8px 14px;cursor:pointer;background:#e9ecef;color:var(--ink);font-size:15px}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.plus{position:fixed;left:50%;top:35%;transform:translateX(-50%);font-size:40px;font-weight:800;color:var(--rbx);pointer-events:none;animation:up 1s forwards}
+@keyframes up{0%{opacity:0;transform:translate(-50%,10px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-60px)}}
+.shake{animation:sh .35s}
+@keyframes sh{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="top">
+      <h1>🧮 Считаем!</h1>
+      <div class="bank"><small>Робуксы</small><span id="bank">0</span> R$</div>
+    </div>
+    <div class="lbl">Считаем в пределах:</div>
+    <div class="seg" id="segLevel"><button data-v="10">10</button><button data-v="20">20</button><button data-v="30">30</button><button data-v="40">40</button></div>
+    <div class="lbl">Как решаем:</div>
+    <div class="seg" id="segMode"><button data-v="line">В строку</button><button data-v="col">В столбик</button></div>
+    <div class="lbl">Действия:</div>
+    <div class="seg" id="segOps"><button data-v="both">+ и −</button><button data-v="add">только +</button><button data-v="sub">только −</button></div>
+  </div>
+
+  <div class="card">
+    <div class="stats"><span>Сегодня: <b id="today">0</b></span><span>Подряд: <b id="streak">0</b></span><span>Всего: <b id="total">0</b></span></div>
+    <div id="lineView"><div class="task" id="lineTask"></div></div>
+    <div id="colView" hidden>
+      <div class="colhead"><span></span><span>дес.</span><span>ед.</span></div>
+      <div class="col" id="colGrid"></div>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="pad" id="pad"></div>
+    <div class="row"><button class="btn" id="hintBtn">💡 Подсказка</button><button class="btn" id="skipBtn">↷ Другой пример</button></div>
+    <div class="hint" id="hint" hidden></div>
+  </div>
+
+  <div class="card lbl" style="margin:0">
+    За каждый пример, решённый <b>с первой попытки</b>, в копилку добавляется <b>0,5 R$</b>. Если ошибся, пример нужно решить ещё раз, но робуксы за него уже не начисляются. Копилка хранится в этом браузере на этом устройстве.
+  </div>
+</div>
+
+<script>
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(b)setTimeout(()=>b.blur(),0)});
+const LS="schet_trainer_v1";
+let st={bank:0,total:0,streak:0,day:"",today:0,level:20,mode:"line",ops:"both"};
+try{const s=JSON.parse(localStorage.getItem(LS));if(s)st=Object.assign(st,s)}catch(e){}
+function save(){try{localStorage.setItem(LS,JSON.stringify(st))}catch(e){}}
+const todayStr=new Date().toLocaleDateString("ru-RU");
+if(st.day!==todayStr){st.day=todayStr;st.today=0;save()}
+
+const $=s=>document.querySelector(s);
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const fmt=n=>(Math.round(n*10)/10).toString().replace(".",",");
+
+let cur=null,input="",cells=["",""],selCell=1,tries=0,lastKey="";
+
+function gen(){
+  const N=st.level;let op=st.ops==="both"?(Math.random()<.5?"+":"-"):(st.ops==="add"?"+":"-");
+  let a,b,c,k,guard=0;
+  do{
+    guard++;
+    if(op==="+"){
+      if(st.mode==="col"&&N>=20){a=rnd(10,N-1);b=rnd(1,N-a)}else{a=rnd(1,N-1);b=rnd(1,N-a)}
+      c=a+b;
+    } else {
+      if(st.mode==="col"&&N>=20){a=rnd(11,N);b=rnd(1,a-1)}else{a=rnd(2,N);b=rnd(1,a-1)}
+      c=a-b;
+    }
+    k=a+op+b;
+  }while((k===lastKey||(N>10&&c<=1&&guard<20))&&guard<40);
+  lastKey=k;
+  return{a,b,op,c};
+}
+function next(){
+  cur=gen();input="";cells=["",""];selCell=1;tries=0;
+  $("#msg").textContent="";$("#msg").className="msg";$("#hint").hidden=true;
+  render();
+}
+function render(){
+  $("#bank").textContent=fmt(st.bank);$("#today").textContent=st.today;$("#streak").textContent=st.streak;$("#total").textContent=st.total;
+  document.querySelectorAll("#segLevel button").forEach(b=>b.classList.toggle("on",+b.dataset.v===st.level));
+  document.querySelectorAll("#segMode button").forEach(b=>b.classList.toggle("on",b.dataset.v===st.mode));
+  document.querySelectorAll("#segOps button").forEach(b=>b.classList.toggle("on",b.dataset.v===st.ops));
+  const sign=cur.op==="+"?"+":"−";
+  $("#lineView").hidden=st.mode!=="line";$("#colView").hidden=st.mode!=="col";
+  if(st.mode==="line"){
+    $("#lineTask").innerHTML=cur.a+" "+sign+" "+cur.b+" = <span class='ans'>"+(input||"&nbsp;")+"</span>";
+  } else {
+    const d=n=>[n>=10?Math.floor(n/10):"",n%10];
+    const A=d(cur.a),B=d(cur.b);
+    const g=$("#colGrid");
+    const markOn=g.dataset.mark==="1";
+    g.innerHTML=
+      "<div class='carry'></div><div class='carry'><button id='markBtn' class='"+(markOn?"on":"")+"' title='"+(cur.op==="+"?"Запомнил 1":"Занял десяток")+"'>"+(markOn?"•":"")+"</button></div><div class='carry'></div>"+
+      "<div class='dig'></div><div class='dig'>"+A[0]+"</div><div class='dig'>"+A[1]+"</div>"+
+      "<div class='dig sign'>"+sign+"</div><div class='dig'>"+B[0]+"</div><div class='dig'>"+B[1]+"</div>"+
+      "<div class='line'></div>"+
+      "<div></div><div class='cell"+(selCell===0?" sel":"")+"' data-i='0'>"+cells[0]+"</div><div class='cell"+(selCell===1?" sel":"")+"' data-i='1'>"+cells[1]+"</div>";
+    g.querySelectorAll(".cell").forEach(c=>c.onclick=()=>{selCell=+c.dataset.i;render()});
+    $("#markBtn").onclick=()=>{g.dataset.mark=markOn?"0":"1";render()};
+  }
+}
+function press(k){
+  if(!cur)return;
+  if(k==="ok")return check();
+  if(st.mode==="line"){
+    if(k==="del")input=input.slice(0,-1);
+    else if(input.length<2)input+=k;
+  } else {
+    if(k==="del"){if(cells[selCell])cells[selCell]="";else if(selCell===0){selCell=1;cells[1]=""}}
+    else{cells[selCell]=k;if(selCell===1)selCell=0}
+  }
+  render();
+}
+function check(){
+  let val;
+  if(st.mode==="line"){if(input==="")return;val=+input}
+  else{if(cells[1]==="")return;val=+((cells[0]||"")+cells[1])}
+  if(val===cur.c){
+    let earned=0;
+    if(tries===0){earned=0.5;st.bank=Math.round((st.bank+0.5)*10)/10;st.streak++;}
+    st.total++;st.today++;save();
+    $("#msg").className="msg good";
+    $("#msg").textContent=tries===0?(st.streak%10===0?"🔥 "+st.streak+" подряд! +0,5 R$":"Верно! +0,5 R$"):"Верно! Теперь правильно 👍";
+    if(earned){const p=document.createElement("div");p.className="plus";p.textContent="+0,5 R$";document.body.appendChild(p);setTimeout(()=>p.remove(),1000)}
+    $("#colGrid").dataset.mark="0";
+    render();setTimeout(next,tries===0?900:1300);cur=null;
+  } else {
+    tries++;st.streak=0;save();
+    $("#msg").className="msg bad";
+    const box=st.mode==="line"?$("#lineTask"):$("#colGrid");box.classList.remove("shake");void box.offsetWidth;box.classList.add("shake");
+    if(tries>=2){$("#msg").textContent="Не так. Посмотри подсказку и реши ещё раз.";showHint()}
+    else $("#msg").textContent="Не так. Проверь ещё раз!";
+    input="";cells=["",""];selCell=1;render();
+  }
+}
+function showHint(){
+  if(!cur)return;const{a,b,op,c}=cur;let t="";
+  const au=a%10,at=Math.floor(a/10),bu=b%10,bt=Math.floor(b/10);
+  if(st.mode==="col"){
+    if(op==="+"){
+      const u=au+bu;
+      t="Сначала единицы: "+au+" + "+bu+" = "+u+". ";
+      t+=u>=10?"Пишем "+(u%10)+" под единицами, а 1 десяток запоминаем (поставь точку над десятками). Потом десятки: "+at+" + "+bt+" + 1 = "+(at+bt+1)+".":"Пишем "+u+" под единицами. Потом десятки: "+(bt?at+" + "+bt+" = "+(at+bt):"просто сносим "+at+" вниз")+".";
+    } else {
+      if(au>=bu)t="Сначала единицы: "+au+" − "+bu+" = "+(au-bu)+". Потом десятки: "+(bt?at+" − "+bt+" = "+(at-bt):"просто сносим "+at+" вниз")+".";
+      else t="Единицы: из "+au+" нельзя вычесть "+bu+". Занимаем 1 десяток (поставь точку над десятками): "+(au+10)+" − "+bu+" = "+(au+10-bu)+". Десятки: "+at+" − 1 − "+bt+" = "+(at-1-bt)+".";
+    }
+  } else {
+    if(op==="+"){
+      if(au+bu>10&&b<10&&a%10!==0){const need=10-au;t="Дополни до круглого числа: "+a+" + "+need+" = "+(a+need)+", а потом ещё "+(b-need)+". Получится "+(a+need)+" + "+(b-need)+".";}
+      else if(b>=10)t="Сначала прибавь десятки: "+a+" + "+(bt*10)+" = "+(a+bt*10)+", потом единицы: + "+bu+".";
+      else t="Посчитай от "+a+" вперёд на "+b+".";
+    } else {
+      if(bu>au&&b<10&&a>10){t="Сначала отними до круглого числа: "+a+" − "+au+" = "+(a-au)+", потом ещё "+(b-au)+".";}
+      else if(b>=10)t="Сначала отними десятки: "+a+" − "+(bt*10)+" = "+(a-bt*10)+", потом единицы: − "+bu+".";
+      else t="Посчитай от "+a+" назад на "+b+".";
+    }
+  }
+  $("#hint").hidden=false;$("#hint").textContent="💡 "+t;
+}
+$("#hintBtn").onclick=()=>{if(tries===0)tries=1;showHint()};
+$("#skipBtn").onclick=()=>{st.streak=0;save();$("#colGrid").dataset.mark="0";next()};
+
+const P=$("#pad");["7","8","9","4","5","6","1","2","3","del","0","ok"].forEach(k=>{
+  const b=document.createElement("button");b.textContent=k==="del"?"⌫":k==="ok"?"✓":k;if(k==="ok")b.className="ok";if(k==="del")b.className="del";
+  b.onclick=()=>press(k);P.appendChild(b);
+});
+document.addEventListener("keydown",e=>{
+  if(/^[0-9]$/.test(e.key)){e.preventDefault();press(e.key)}
+  else if(e.key==="Backspace"){e.preventDefault();press("del")}
+  else if(e.key==="Enter"){e.preventDefault();press("ok")}
+});
+function seg(id,key,num){document.querySelectorAll(id+" button").forEach(b=>b.onclick=()=>{st[key]=num?+b.dataset.v:b.dataset.v;save();$("#colGrid").dataset.mark="0";next()})}
+seg("#segLevel","level",true);seg("#segMode","mode");seg("#segOps","ops");
+next();
+</script>
+</body>
+</html>
