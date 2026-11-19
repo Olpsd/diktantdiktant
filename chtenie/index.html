@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Читаем вслух — 2 класс</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#f3f0ff;--card:#fff;--ink:#2b2d42;--accent:#7b5cff;--green:#2a9d8f;--red:#e63946;--muted:#6c757d;--line:#e2dcff;--rbx:#00b06f;--yel:#ffd166}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;font-size:18px;line-height:1.4}
+.wrap{max-width:640px;margin:0 auto;padding:12px}
+.card{background:var(--card);border-radius:18px;padding:14px;box-shadow:0 3px 0 var(--line);margin-bottom:12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+h1{font-size:22px;margin:0}
+.bank{background:var(--rbx);color:#fff;border-radius:14px;padding:6px 12px;font-weight:800;font-size:20px;white-space:nowrap;text-align:right}
+.bank small{display:block;font-size:12px;font-weight:600;opacity:.9}
+.sub{font-size:13px;color:var(--muted);margin-top:6px}
+.warn{background:#fff0f0;border:2px solid var(--red);border-radius:14px;padding:12px;font-size:16px;margin-bottom:12px}
+.lvl{font-weight:800;color:var(--accent);margin:10px 4px 6px}
+.book{display:flex;align-items:center;gap:12px;cursor:pointer;border:3px solid transparent}
+.book:hover{border-color:var(--accent)}
+.book .ic{font-size:40px;width:52px;text-align:center}
+.book h3{margin:0;font-size:20px}
+.book p{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.book .st{margin-left:auto;font-size:26px}
+.btn{font:inherit;font-weight:800;border:0;border-radius:14px;padding:10px 16px;cursor:pointer;background:#e9ecef;color:var(--ink);touch-action:manipulation}
+.btn.p{background:var(--accent);color:#fff}.btn.g{background:var(--green);color:#fff}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+.text{font-size:30px;line-height:1.75;font-weight:600;letter-spacing:.3px}
+.w{border-radius:8px;padding:0 3px;transition:background .2s;cursor:pointer}
+.w.cur{background:#ede8ff;box-shadow:inset 0 -4px 0 var(--accent)}
+.w.ok{background:#c9f2d8;color:#145c35}
+.w.skip{background:#ffeab0}
+.mic{width:96px;height:96px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:44px;cursor:pointer;box-shadow:0 4px 0 #5a3fd6;touch-action:manipulation}
+.mic.on{background:var(--red);box-shadow:0 4px 0 #a61e2a;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.status{text-align:center;font-weight:800;min-height:26px;color:var(--muted);margin:6px 0}
+.heard{text-align:center;font-size:14px;color:var(--muted);min-height:20px;font-style:italic}
+.prog{height:12px;background:#eee;border-radius:10px;overflow:hidden;margin:8px 0}
+.prog i{display:block;height:100%;background:var(--green);width:0;transition:width .3s}
+.pill{background:#ede8ff;border-radius:20px;padding:4px 12px;font-weight:800;font-size:15px}
+.q{margin:12px 0}
+.q p{font-weight:800;margin:0 0 6px}
+.q .opts{display:flex;flex-direction:column;gap:6px}
+.q button{font:inherit;text-align:left;border:3px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer}
+.q button.ok{border-color:var(--green);background:#e6f6f3}
+.q button.bad{border-color:var(--red);background:#ffe3e5}
+.plus{position:fixed;left:50%;top:30%;transform:translateX(-50%);font-size:34px;font-weight:800;color:var(--rbx);pointer-events:none;animation:up 1s forwards;z-index:9}
+@keyframes up{0%{opacity:0;transform:translate(-50%,10px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-60px)}}
+.done{font-size:56px;text-align:center}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="top">
+      <h1><a href="../" style="text-decoration:none" title="Все тренажёры">🏠</a> 📖 Читаем вслух</h1>
+      <div class="bank"><small>Робуксы за чтение</small><span id="bank">0</span> R$</div>
+    </div>
+    <div class="sub" id="allBank"></div>
+  </div>
+
+  <div class="warn" id="noSR" hidden>
+    <b>В этом браузере нет распознавания речи.</b> Открой эту страницу в <b>Google Chrome</b> на Android. Нужен интернет и разрешение на микрофон.
+  </div>
+
+  <!-- ПОЛКА -->
+  <section id="shelf">
+    <div id="shelfList"></div>
+    <div class="card sub" style="font-size:15px">
+      За каждое прочитанное слово ребёнок получает <b>0,1 R$</b>, за правильный ответ на вопрос после рассказа <b>0,2 R$</b>. Награда начисляется только <b>за первое прочтение</b> рассказа, при повторном чтении робуксы не добавляются.<br>
+      Если слово не засчитывается, прочитай его ещё раз чётко. Нажатие на слово озвучивает его, а кнопка «Пропустить слово» помогает пройти дальше, но без награды.
+    </div>
+  </section>
+
+  <!-- ЧТЕНИЕ -->
+  <section id="reader" hidden>
+    <div class="card">
+      <div class="top"><button class="btn" id="backBtn">← Полка</button><span class="pill" id="pageInfo"></span></div>
+      <h2 style="margin:10px 0 2px" id="rTitle"></h2>
+      <div class="sub" id="rAuthor" style="margin:0 0 6px"></div>
+      <div class="prog"><i id="progBar"></i></div>
+      <div class="text" id="text"></div>
+    </div>
+    <div class="card">
+      <div class="row"><button class="mic" id="micBtn">🎤</button></div>
+      <div class="status" id="status">Нажми на микрофон и читай вслух</div>
+      <div class="heard" id="heard"></div>
+      <div class="row" style="margin-top:6px">
+        <button class="btn" id="skipBtn">Пропустить слово ↷</button>
+        <button class="btn g" id="nextPage" hidden>Следующая страница ▶</button>
+      </div>
+      <div class="sub center" id="rewardNote" style="text-align:center"></div>
+    </div>
+  </section>
+
+  <!-- ВОПРОСЫ -->
+  <section id="quiz" hidden>
+    <div class="card">
+      <div class="done">🎉</div>
+      <h2 style="text-align:center;margin:0" id="qTitle"></h2>
+      <p style="text-align:center" id="qSum"></p>
+      <h3>Ответь на вопросы:</h3>
+      <div id="qList"></div>
+      <div class="row"><button class="btn p" id="qBack">К полке рассказов</button></div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ====== РАССКАЗЫ ====== */
+const STORIES=[
+ {id:"muravey",lvl:1,ic:"🐜",t:"Муравей и голубка",a:"Л. Н. Толстой",
+  text:"Муравей спустился к ручью: захотел напиться. Волна захлестнула его и чуть не потопила. Голубка несла ветку; она увидела — муравей тонет, и бросила ему ветку в ручей. Муравей сел на ветку и спасся. Потом охотник расставил сеть на голубку и хотел захлопнуть. Муравей подполз к охотнику и укусил его за ногу; охотник охнул и уронил сеть. Голубка вспорхнула и улетела.",
+  q:[["Кто спас муравья?",["Голубка","Охотник","Рыбка"],0],["Как муравей помог голубке?",["Укусил охотника за ногу","Принёс ей ветку","Позвал других птиц"],0]]},
+ {id:"sneg",lvl:1,ic:"⛄",t:"Первый снег",a:"Рассказ для тренажёра",
+  text:"Утром Петя посмотрел в окно. Всё вокруг стало белым! Ночью выпал первый снег. Петя быстро оделся и выбежал во двор. Там уже гуляли ребята. Они лепили снеговика. Петя принёс морковку для носа. Таня нашла две пуговицы для глаз. Снеговик получился весёлый. Вечером Петя рассказал маме про снеговика. Мама улыбнулась и сказала: — Завтра покажешь его мне.",
+  q:[["Что принёс Петя для снеговика?",["Морковку","Ведро","Шапку"],0],["Что нашла Таня?",["Две пуговицы","Длинную ветку","Тёплый шарф"],0]]},
+ {id:"shchenok",lvl:2,ic:"🐶",t:"Как Миша спас щенка",a:"Рассказ для тренажёра",
+  text:"Миша шёл из школы домой. Вдруг он услышал тихий писк. Под старой лавочкой сидел маленький щенок. Он дрожал от холода. Миша снял шарф и укутал щенка. — Не бойся, малыш, — сказал Миша. — Я тебя не обижу. Дома мама налила щенку тёплого молока. Щенок попил и уснул на коврике. Вечером пришёл папа. Он долго смотрел на щенка, а потом сказал: — Ну что ж, будет у нас новый друг. Как назовём его? — Пушок! — ответил Миша. С тех пор Пушок всегда встречает Мишу из школы.",
+  q:[["Где сидел щенок?",["Под старой лавочкой","На дереве","У двери подъезда"],0],["Чем Миша укутал щенка?",["Шарфом","Курткой","Шапкой"],0],["Как назвали щенка?",["Пушок","Шарик","Бобик"],0]]},
+ {id:"kostochka",lvl:2,ic:"🍑",t:"Косточка",a:"Л. Н. Толстой",
+  text:"Купила мать слив и хотела их дать детям после обеда. Они лежали на тарелке. Ваня никогда не ел слив и всё нюхал их. И очень они ему нравились. Очень хотелось съесть. Он всё ходил мимо слив. Когда никого не было в горнице, он не удержался, схватил одну сливу и съел. Перед обедом мать сочла сливы и видит, одной нет. Она сказала отцу. За обедом отец и говорит: — А что, дети, не съел ли кто-нибудь одну сливу? Все сказали: — Нет. Ваня покраснел, как рак, и сказал тоже: — Нет, я не ел. Тогда отец сказал: — Что съел кто-нибудь из вас, это нехорошо; но не в том беда. Беда в том, что в сливах есть косточки, и если кто не умеет их есть и проглотит косточку, то через день умрёт. Я этого боюсь. Ваня побледнел и сказал: — Нет, я косточку бросил за окошко. И все засмеялись, а Ваня заплакал.",
+  q:[["Что купила мать?",["Сливы","Яблоки","Груши"],0],["Что сказал Ваня в конце?",["Что бросил косточку за окошко","Что сливу съела сестра","Что слив было мало"],0],["Почему все засмеялись?",["Ваня сам выдал, что съел сливу","Ваня смешно упал","Отец рассказал сказку"],0]]},
+ {id:"pchely",lvl:3,ic:"🐝",t:"Пчёлы и мухи",a:"К. Д. Ушинский",
+  text:"Поздней осенью выдался славный денёк, какие и весной на редкость: свинцовые тучи рассеялись, ветер улёгся, солнце выглянуло и смотрело так ласково, как будто прощалось с поблёкшими растениями. Вызванные из ульев светом и теплом мохнатые пчёлки, весело жужжа, перелетали с травки на травку, не за мёдом (его уже негде было взять), а так себе, чтобы повеселиться и порасправить свои крылышки. — Как вы глупы со своим весельем! — сказала им муха, которая тут же сидела на травке, пригорюнясь и опустив нос. — Разве вы не знаете, что солнышко это только на минуту и что, наверное, сегодня же начнётся ветер, дождь, холод и нам всем придётся пропадать. — Зум-зум-зум! Зачем же пропадать? — отвечали мухе весёлые пчёлки. — Мы повеселимся, пока светит солнышко, а как наступит непогода, спрячемся в свой тёплый улей, где у нас за лето припасено много мёду.",
+  q:[["Какое было время года?",["Поздняя осень","Весна","Лето"],0],["Какое настроение было у мухи?",["Грустное","Весёлое","Сонное"],0],["Где пчёлы спрячутся от непогоды?",["В тёплом улье","Под листиком","В норке"],0]]}
+];
+const LVL={1:"⭐ Короткие рассказы",2:"⭐⭐ Средние рассказы",3:"⭐⭐⭐ Длинные рассказы"};
+
+/* ====== ХРАНЕНИЕ ====== */
+const LS="chtenie_trainer_v1";
+let st={bank:0,stories:{}};
+try{const s=JSON.parse(localStorage.getItem(LS));if(s)st=Object.assign(st,s)}catch(e){}
+function save(){try{localStorage.setItem(LS,JSON.stringify(st))}catch(e){}}
+function sInfo(id){if(!st.stories[id])st.stories[id]={page:0,credited:[],done:false,q:{}};return st.stories[id]}
+const fmt=n=>(Math.round(n*10)/10).toString().replace(".",",");
+function addBank(x){st.bank=Math.round((st.bank+x)*100)/100;save();showBank()}
+function showBank(){
+  $("#bank").textContent=fmt(st.bank);
+  let sch=0;try{const s=JSON.parse(localStorage.getItem("schet_trainer_v1"));if(s&&s.bank)sch=s.bank}catch(e){}
+  $("#allBank").textContent=sch?("Ещё за счёт: "+fmt(sch)+" R$ · Всего: "+fmt(st.bank+sch)+" R$"):"";
+}
+function plus(t){const p=document.createElement("div");p.className="plus";p.textContent=t;document.body.appendChild(p);setTimeout(()=>p.remove(),1000)}
+
+const $=s=>document.querySelector(s);
+
+/* ====== ТЕКСТ → СТРАНИЦЫ И СЛОВА ====== */
+function norm(w){return w.toLowerCase().replace(/ё/g,"е").replace(/[^а-яa-z0-9]/g,"")}
+function pagesOf(story){
+  if(story._pages)return story._pages;
+  const sents=story.text.match(/[^.!?]+[.!?]+(\s*—?\s*)?|[^.!?]+$/g).map(s=>s.trim()).filter(Boolean);
+  const pages=[];let cur=[],cnt=0;
+  sents.forEach(s=>{const n=s.split(/\s+/).length;if(cnt+n>38&&cur.length){pages.push(cur.join(" "));cur=[];cnt=0}cur.push(s);cnt+=n});
+  if(cur.length)pages.push(cur.join(" "));
+  // слова: глобальная нумерация по всему рассказу
+  let gi=0;
+  story._pages=pages.map(p=>{
+    const toks=p.split(/\s+/);
+    return toks.map(tok=>{const n=norm(tok);return n?{raw:tok,n,gi:gi++}:{raw:tok,n:"",gi:-1}});
+  });
+  story._total=gi;
+  return story._pages;
+}
+
+/* ====== ПОЛКА ====== */
+function renderShelf(){
+  $("#shelf").hidden=false;$("#reader").hidden=true;$("#quiz").hidden=true;
+  const L=$("#shelfList");L.innerHTML="";
+  [1,2,3].forEach(lv=>{
+    const h=document.createElement("div");h.className="lvl";h.textContent=LVL[lv];L.appendChild(h);
+    STORIES.filter(s=>s.lvl===lv).forEach(s=>{
+      pagesOf(s);const inf=st.stories[s.id];
+      const d=document.createElement("div");d.className="card book";
+      const status=!inf?"":inf.done?"✅":"📌";
+      const words=s._total;
+      d.innerHTML="<div class='ic'>"+s.ic+"</div><div><h3>"+s.t+"</h3><p>"+s.a+" · "+words+" слов · до "+fmt(words*0.1+s.q.length*0.2)+" R$"+(inf&&!inf.done&&inf.page?" · стр. "+(inf.page+1):"")+(inf&&inf.done?" · прочитан":"")+"</p></div><div class='st'>"+status+"</div>";
+      d.onclick=()=>openStory(s);L.appendChild(d);
+    });
+  });
+  showBank();
+}
+
+/* ====== ЧТЕНИЕ ====== */
+let S=null,pi=0,words=[],pos=0,consumed={},lastProgress=0,listening=false,rec=null,skipTimer=null;
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR)$("#noSR").hidden=false;
+
+function openStory(s){
+  S=s;const inf=sInfo(s.id);
+  if(inf.done){inf.page=0}
+  pi=Math.min(inf.page||0,pagesOf(s).length-1);
+  save();
+  $("#shelf").hidden=true;$("#quiz").hidden=true;$("#reader").hidden=false;
+  $("#rTitle").textContent=s.ic+" "+s.t;$("#rAuthor").textContent=s.a;
+  loadPage();window.scrollTo(0,0);
+}
+function loadPage(){
+  const pages=pagesOf(S);words=pages[pi];pos=0;consumed={};
+  while(pos<words.length&&!words[pos].n)pos++;
+  const T=$("#text");T.innerHTML="";
+  words.forEach((w,i)=>{
+    const sp=document.createElement("span");sp.className="w";sp.textContent=w.raw;sp.dataset.i=i;
+    sp.onclick=()=>speakWord(w.raw);
+    T.appendChild(sp);T.appendChild(document.createTextNode(" "));
+  });
+  $("#pageInfo").textContent="Страница "+(pi+1)+" из "+pages.length;
+  $("#nextPage").hidden=true;$("#heard").textContent="";
+  const inf=sInfo(S.id);
+  $("#rewardNote").textContent=inf.done?"Этот рассказ уже прочитан, повторное чтение без награды.":"";
+  lastProgress=Date.now();
+  paint();
+}
+function paint(){
+  document.querySelectorAll("#text .w").forEach(sp=>{
+    const i=+sp.dataset.i;sp.classList.toggle("cur",i===pos&&listening);
+  });
+  const total=S._total;const inf=sInfo(S.id);
+  const doneWords=words.filter((w,i)=>w.n&&i<pos).length;
+  const before=pagesOf(S).slice(0,pi).reduce((a,p)=>a+p.filter(w=>w.n).length,0);
+  $("#progBar").style.width=Math.round((before+doneWords)/total*100)+"%";
+}
+function markWord(i,how){
+  const sp=document.querySelector('#text .w[data-i="'+i+'"]');if(sp)sp.classList.add(how);
+  const w=words[i];const inf=sInfo(S.id);
+  if(how==="ok"&&!inf.done&&w.gi>=0&&!inf.credited.includes(w.gi)){inf.credited.push(w.gi);addBank(0.1)}
+}
+function advance(n,how){
+  for(let k=0;k<n&&pos<words.length;k++){if(words[pos].n)markWord(pos,how);pos++;while(pos<words.length&&!words[pos].n)pos++}
+  lastProgress=Date.now();save();paint();
+  if(pos>=words.length)pageDone();
+  else{const sp=document.querySelector('#text .w[data-i="'+pos+'"]');if(sp&&sp.scrollIntoView)sp.scrollIntoView({block:"nearest",behavior:"smooth"})}
+}
+
+/* сравнение слов */
+function lev(a,b){if(a===b)return 0;const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let prev=Array.from({length:n+1},(_,j)=>j);for(let i=1;i<=m;i++){const cur=[i];for(let j=1;j<=n;j++)cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=cur}return prev[n]}
+function same(tok,w){
+  if(!tok||!w)return false;if(tok===w)return true;
+  const L=w.length;
+  if(L<=3)return false;
+  const d=lev(tok,w);
+  if(L<=5)return d<=1;
+  if(L<=8)return d<=2;
+  return d<=3||(tok.length>=5&&(w.startsWith(tok)||tok.startsWith(w.slice(0,6))));
+}
+const nextIdx=(i)=>{let j=i+1;while(j<words.length&&!words[j].n)j++;return j};
+/* пытается сопоставить токены, начиная с позиции t; возвращает сколько токенов съедено (0 — не совпало) */
+function tryMatch(toks,t){
+  if(pos>=words.length)return 0;
+  const w=words[pos].n;
+  if(same(toks[t],w)){advance(1,"ok");return 1}
+  // слово через дефис может прийти двумя токенами
+  if(t+1<toks.length&&same(toks[t]+toks[t+1],w)){advance(1,"ok");return 2}
+  // короткое служебное слово (и, в, на, а...) распознаватель мог пропустить
+  const j=nextIdx(pos);
+  if(w.length<=3&&j<words.length&&same(toks[t],words[j].n)){advance(2,"ok");return 1}
+  return 0;
+}
+function feed(transcript,isFinal,key){
+  const toks=transcript.split(/\s+/).map(norm).filter(Boolean);
+  let c=consumed[key]||0;
+  for(let t=c;t<toks.length;t++){
+    if(pos>=words.length)break;
+    const used=tryMatch(toks,t);
+    if(used){c=t+used;t+=used-1}
+    else if(isFinal)c=t+1;
+  }
+  consumed[key]=isFinal?toks.length:c;
+  $("#heard").textContent=transcript?("Слышу: «"+transcript.trim().split(/\s+/).slice(-6).join(" ")+"»"):"";
+}
+window.__feed=(txt)=>feed(txt,true,"test"+Math.random()); // для проверки без микрофона
+
+let recSession=0;
+function startRec(){
+  if(!SR){$("#status").textContent="Открой страницу в Google Chrome";return}
+  rec=new SR();rec.lang="ru-RU";rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;
+  const sess=++recSession;
+  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){feed(e.results[i][0].transcript,e.results[i].isFinal,sess+"_"+i)}};
+  rec.onerror=e=>{
+    if(e.error==="not-allowed"||e.error==="service-not-allowed"){listening=false;setMic();$("#status").textContent="Нет доступа к микрофону. Разреши микрофон в настройках сайта.";}
+    else if(e.error==="network"){$("#status").textContent="Нет интернета: распознаванию речи нужен интернет."}
+  };
+  rec.onend=()=>{if(listening){setTimeout(()=>{if(listening)try{startRec()}catch(e){}},250)}};
+  try{rec.start()}catch(e){}
+}
+function setMic(){
+  $("#micBtn").classList.toggle("on",listening);$("#micBtn").textContent=listening?"⏹":"🎤";
+  if(listening)$("#status").textContent="Слушаю… читай подчёркнутое слово";
+  else if(!$("#status").textContent.startsWith("Нет"))$("#status").textContent="Нажми на микрофон и читай вслух";
+  paint();
+}
+$("#micBtn").onclick=()=>{
+  if(listening){listening=false;try{rec&&rec.stop()}catch(e){}setMic();return}
+  listening=true;setMic();startRec();
+};
+function stopRec(){listening=false;try{rec&&rec.abort()}catch(e){}setMic()}
+$("#skipBtn").onclick=()=>{if(pos<words.length)advance(1,"skip")};
+function speakWord(t){
+  if(!("speechSynthesis" in window))return;
+  const wasL=listening;if(wasL)stopRec();
+  const u=new SpeechSynthesisUtterance(t.replace(/[^А-Яа-яЁё-]/g,""));u.lang="ru-RU";u.rate=.8;
+  const v=speechSynthesis.getVoices().find(v=>/^ru/i.test(v.lang));if(v)u.voice=v;
+  u.onend=()=>{if(wasL){listening=true;setMic();startRec()}};
+  speechSynthesis.cancel();speechSynthesis.speak(u);
+}
+function pageDone(){
+  const pages=pagesOf(S);const inf=sInfo(S.id);
+  if(pi<pages.length-1){
+    inf.page=pi+1;save();
+    $("#status").textContent="Страница прочитана! 👏";$("#nextPage").hidden=false;
+  } else {
+    stopRec();
+    const first=!inf.done;inf.done=true;inf.page=0;save();
+    showQuiz(first);
+  }
+}
+$("#nextPage").onclick=()=>{pi++;loadPage()};
+$("#backBtn").onclick=()=>{stopRec();renderShelf()};
+
+/* ====== ВОПРОСЫ ====== */
+function showQuiz(first){
+  $("#reader").hidden=true;$("#quiz").hidden=false;window.scrollTo(0,0);
+  const inf=sInfo(S.id);
+  $("#qTitle").textContent="Рассказ «"+S.t+"» прочитан!";
+  const got=inf.credited.length;
+  $("#qSum").textContent=first?("Ты заработал "+fmt(got*0.1)+" R$ за чтение. За каждый правильный ответ ещё +0,2 R$."):"Этот рассказ ты уже читал, поэтому сейчас без награды. Но ответить на вопросы всё равно полезно!";
+  const Q=$("#qList");Q.innerHTML="";
+  S.q.forEach((q,qi)=>{
+    const d=document.createElement("div");d.className="q";
+    const p=document.createElement("p");p.textContent=(qi+1)+". "+q[0];d.appendChild(p);
+    const o=document.createElement("div");o.className="opts";
+    const order=q[1].map((x,i)=>i).sort(()=>Math.random()-.5);
+    let answered=false;
+    order.forEach(i=>{
+      const b=document.createElement("button");b.textContent=q[1][i];
+      b.onclick=()=>{
+        if(answered)return;answered=true;
+        if(i===q[2]){b.classList.add("ok");if(!inf.q[qi]){inf.q[qi]=1;addBank(0.2);plus("+0,2 R$")}}
+        else{b.classList.add("bad");[...o.children].find(x=>x.textContent===q[1][q[2]]).classList.add("ok");if(inf.q[qi]===undefined)inf.q[qi]=0}
+        save();
+      };
+      o.appendChild(b);
+    });
+    d.appendChild(o);Q.appendChild(d);
+  });
+}
+$("#qBack").onclick=renderShelf;
+
+renderShelf();
+</script>
+</body>
+</html>
